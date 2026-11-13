@@ -1,5 +1,5 @@
 /* 껍데기만 저장해 두어 빨리 열리게 한다. 데이터(GitHub·Supabase)는 건드리지 않는다. */
-const CACHE = 'knu1-shell-v2';
+const CACHE = 'knu1-shell-v3';
 const SHELL = ['./', 'index.html', 'shell.js', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
