@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>본과 1학년</title>
+<meta name="theme-color" content="#F5F6F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15191F" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="본과 1학년">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F5F6F4;--sheet:#fff;--ink:#1C2433;--muted:#5B6473;--rule:#D9DDE3;--theory:#34507A;--crimson:#A4122E;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--paper:#15191F;--sheet:#1C2129;--ink:#E6E9EE;--muted:#A1A9B6;--rule:#343B46;--theory:#7FA0CF;--crimson:#E0607A}}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-text-size-adjust:100%}
+#boot{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));box-sizing:border-box}
+.card{width:min(380px,100%);text-align:center}
+.card .eyebrow{margin:0 0 6px;font-size:13px;color:var(--muted);letter-spacing:.04em}
+.card h1{font-family:"Noto Serif KR","AppleMyungjo",serif;font-weight:700;font-size:34px;margin:0 0 28px}
+.card p{line-height:1.7;color:var(--muted);margin:0 0 16px;font-size:15px;word-break:keep-all}
+.card b{color:var(--ink)}
+.btn{font:inherit;font-size:16px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;border-radius:12px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule);margin-top:10px}
+.btn:disabled{opacity:.6}
+.spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--rule);border-top-color:var(--theory);animation:r 1s linear infinite;margin:0 auto 16px}
+@keyframes r{to{transform:rotate(360deg)}}
+.err{color:var(--crimson)}
+code{font-size:14px;background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:1px 6px;color:var(--ink)}
+</style>
+</head>
+<body>
+<div id="boot"><div class="card">
+  <p class="eyebrow">경북대학교 의과대학</p>
+  <h1>본과 1학년</h1>
+  <div id="bootmsg"><div class="spin" aria-hidden="true"></div><p>여는 중…</p></div>
+</div></div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shell.js"></script>
+</body>
+</html>
