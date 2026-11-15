@@ -1,7 +1,7 @@
 {
   "name": "본과 1학년",
   "short_name": "본과 1학년",
-  "description": "시간표 · 강의계획서 · 교수 평가 · 기출 · 학습자료",
+  "description": "시간표 · 강의계획서 · 수업 후기 · 기출 · 학습자료",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
