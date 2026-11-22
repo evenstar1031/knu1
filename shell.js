@@ -213,6 +213,8 @@
       [html, idx] = await withTimeout(Promise.all([raw('app/app.html'), raw('app/gichul_index.json').then(JSON.parse).catch(() => null)]), 12000);
       store.set('knu1.app', html); if (idx) store.set('knu1.idx', JSON.stringify(idx));
     } catch (e) {
+      // GitHub 로그인이 끊김(다른 기기에서 여러 번 로그인하면 예전 것이 끊긴다) → 예전 화면으로 열면 올리기가 전부 실패하므로 다시 로그인부터
+      if (!guest && e.status === 401) { store.del(TOKEN_KEY); loginScreen('<span class="err">GitHub 로그인이 만료됐습니다. 다시 로그인해 주세요.</span>'); return; }
       html = store.get('knu1.app'); try { idx = JSON.parse(store.get('knu1.idx') || 'null'); } catch (x) {}
       if (!html) {
         const why = guest ? (e.status === 404 ? '앱 파일을 찾지 못했습니다. 잠시 뒤 다시 열어 주세요.' : '인터넷 연결을 확인해 주세요.')
