@@ -180,57 +180,131 @@
     return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('timeout'), { status: 0 })), ms))]);
   }
 
+  /* ── 저장해 둔 앱 ── 열 때는 저장해 둔 것을 바로 보여 주고, 새 버전은 뒤에서 받아 「새로 고침」으로 알린다 */
+  const C = { app: 'knu1.app', idx: 'knu1.idx', sha: 'knu1.sha', me: 'knu1.me', checked: 'knu1.checked' };
+  const readJSON = k => { try { return JSON.parse(store.get(k) || 'null'); } catch (e) { return null; } };
+
+  function toast(text, label, act) {
+    let t = document.querySelector('.knu1-toast');
+    if (!t) {
+      t = document.createElement('div'); t.className = 'knu1-toast'; t.setAttribute('role', 'status');
+      t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:70;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);padding:10px 10px 10px 16px;border-radius:14px;background:#1C2433;color:#fff;font:600 14.5px/1.4 "IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.25)';
+      document.body.appendChild(t);
+    }
+    t.innerHTML = `<span>${h(text)}</span>`;
+    if (label) {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+      b.style.cssText = 'font:inherit;border:0;border-radius:10px;padding:8px 14px;background:#7FA0CF;color:#0F1726;cursor:pointer;white-space:nowrap';
+      b.onclick = act; t.appendChild(b);
+    }
+    const x = document.createElement('button'); x.type = 'button'; x.setAttribute('aria-label', '닫기'); x.textContent = '×';
+    x.style.cssText = 'font:inherit;font-size:20px;line-height:1;border:0;background:none;color:#fff;opacity:.7;padding:4px 6px;cursor:pointer';
+    x.onclick = () => t.remove(); t.appendChild(x);
+  }
+
+  async function download(guest, signal) {
+    const [html, idx] = await Promise.all([
+      raw(APP_DIR + 'app.html', 'text', signal),
+      raw(APP_DIR + 'gichul_index.json', 'text', signal).then(t => (JSON.parse(t), t)).catch(() => null),
+    ]);
+    store.set(C.app, html); if (idx) store.set(C.idx, idx);
+    return { html, idx: idx || store.get(C.idx) };
+  }
+
+  let refreshing = false;
+  async function refresh(guest) {                // 뒤에서 새 버전 확인 (로그인: 저장소 위치만 먼저 물어봐서 같으면 끝)
+    if (refreshing) return; refreshing = true;
+    try {
+      const oldHtml = store.get(C.app), oldIdx = store.get(C.idx);
+      let sha = null;
+      if (!guest) {
+        sha = String(await gh(`repos/${CFG.repo}/commits/main`, { accept: 'application/vnd.github.sha', as: 'text' })).trim();
+        if (sha && sha === store.get(C.sha)) { store.set(C.checked, String(Date.now())); return; }
+      }
+      const got = await download(guest);
+      if (sha) store.set(C.sha, sha);
+      store.set(C.checked, String(Date.now()));
+      if (got.html !== oldHtml || (got.idx && got.idx !== oldIdx)) toast('새 내용이 있어요', '새로 고침', () => location.reload());
+    } catch (e) {
+      if (!guest && e.status === 401) toast('GitHub 로그인이 만료됐어요', '다시 로그인', () => { store.del(TOKEN_KEY); store.del(C.me); login(); });
+    } finally { refreshing = false; }
+  }
+
+  async function member() {                       // 회원인지 확인 → {login, role} 또는 null
+    const who = await sb.rpc('my_login');
+    const login = (who.data || '').toLowerCase();
+    const { data: me, error } = await sb.from('members').select('login,role').eq('login', login).maybeSingle();
+    if (error) throw error;
+    return me ? { login, role: me.role } : { login, role: null };
+  }
+  function notMember(login) {
+    store.del(C.me);
+    show(`<p><b>${h(login || '이 계정')}</b> 은(는) 아직 회원이 아닙니다.</p><p>관리자에게 GitHub 아이디를 알려 주세요. 그동안은 둘러보기로 볼 수 있습니다.</p>
+      <button class="btn" id="b-guest" type="button">둘러보기로 계속</button>
+      <button class="btn ghost" id="b-out" type="button">다른 계정으로 로그인</button>`);
+    document.getElementById('b-guest').onclick = async () => { await sb.auth.signOut().catch(() => {}); store.del(TOKEN_KEY); store.set('knu1.guest', '1'); enter({ guest: true }); };
+    document.getElementById('b-out').onclick = signOut;
+  }
+
   async function main() {
     const q = new URLSearchParams(location.search);
     if (q.get('error_description')) { loginScreen(`<span class="err">${h(q.get('error_description'))}</span>`); history.replaceState(null, '', location.pathname + location.hash); return; }
     const { data: { session } } = await sb.auth.getSession();
     if (location.search) history.replaceState(null, '', location.pathname + location.hash);
-    if (!session) { if (store.get('knu1.guest')) return enter({ guest: true }); loginScreen(); return; }
+    if (!session) { store.del(C.me); if (store.get('knu1.guest')) return enter({ guest: true }); loginScreen(); return; }
     if (session.provider_token) store.set(TOKEN_KEY, session.provider_token);
     GH_TOKEN = store.get(TOKEN_KEY);
     if (!GH_TOKEN) { loginScreen('GitHub 연결을 다시 해 주세요.'); return; }
 
-    busy('계정 확인 중…');
-    const who = await sb.rpc('my_login');
-    LOGIN = (who.data || '').toLowerCase();
-    const { data: me, error: meErr } = await sb.from('members').select('login,role').eq('login', LOGIN).maybeSingle();
-    if (meErr || !me) {
-      show(`<p><b>${h(LOGIN || '이 계정')}</b> 은(는) 아직 회원이 아닙니다.</p><p>관리자에게 GitHub 아이디를 알려 주세요. 그동안은 둘러보기로 볼 수 있습니다.</p>
-        <button class="btn" id="b-guest" type="button">둘러보기로 계속</button>
-        <button class="btn ghost" id="b-out" type="button">다른 계정으로 로그인</button>`);
-      document.getElementById('b-guest').onclick = async () => { await sb.auth.signOut().catch(() => {}); store.del(TOKEN_KEY); store.set('knu1.guest', '1'); enter({ guest: true }); };
-      document.getElementById('b-out').onclick = signOut; return;
+    const known = readJSON(C.me);
+    if (known && known.role && store.get(C.app)) {
+      // 빠른 길: 지난번 회원 정보로 바로 열고, 회원 확인은 뒤에서
+      LOGIN = known.login; ROLE = known.role; store.del('knu1.guest');
+      enter({ guest: false });
+      member().then(m => {
+        if (!m.role) { store.del(C.me); toast('회원 정보가 바뀌었어요', '다시 열기', () => location.reload()); }
+        else if (m.role !== known.role || m.login !== known.login) { store.set(C.me, JSON.stringify(m)); toast('권한이 바뀌었어요', '새로 고침', () => location.reload()); }
+      }).catch(() => {});
+      return;
     }
-    ROLE = me.role;
+    busy('계정 확인 중…');
+    const fetching = download(false).catch(e => e);      // 회원 확인과 동시에 앱도 받기
+    let m;
+    try { m = await member(); } catch (e) { show(`<p class="err">계정을 확인하지 못했습니다. 인터넷 연결을 확인해 주세요.</p><button class="btn" type="button" onclick="location.reload()">다시 시도</button>`); return; }
+    if (!m.role) { notMember(m.login); return; }
+    LOGIN = m.login; ROLE = m.role; store.set(C.me, JSON.stringify(m));
     store.del('knu1.guest');
-    return enter({ guest: false });
+    return enter({ guest: false, fetching });
   }
 
-  async function enter({ guest }) {
+  async function enter({ guest, fetching }) {
     if (guest) { raw = rawPublic; LOGIN = ''; ROLE = 'guest'; }
-    busy('불러오는 중…');
-    let html = null, idx = null;
-    try {
-      [html, idx] = await withTimeout(Promise.all([raw(APP_DIR + 'app.html'), raw(APP_DIR + 'gichul_index.json').then(JSON.parse).catch(() => null)]), 12000);
-      store.set('knu1.app', html); if (idx) store.set('knu1.idx', JSON.stringify(idx));
-    } catch (e) {
-      // GitHub 로그인이 끊김(다른 기기에서 여러 번 로그인하면 예전 것이 끊긴다) → 예전 화면으로 열면 올리기가 전부 실패하므로 다시 로그인부터
-      if (!guest && e.status === 401) { store.del(TOKEN_KEY); loginScreen('<span class="err">GitHub 로그인이 만료됐습니다. 다시 로그인해 주세요.</span>'); return; }
-      html = store.get('knu1.app'); try { idx = JSON.parse(store.get('knu1.idx') || 'null'); } catch (x) {}
-      if (!html) {
-        const why = guest ? (e.status === 404 ? '앱 파일을 찾지 못했습니다. 잠시 뒤 다시 열어 주세요.' : '인터넷 연결을 확인해 주세요.')
-                  : e.status === 404 ? '저장소 초대를 아직 수락하지 않았거나, 앱 파일이 저장소에 없습니다. GitHub 메일함에서 초대를 수락해 주세요.'
-                  : (e.status === 401 || e.status === 403) ? 'GitHub 권한이 만료됐습니다. 다시 로그인해 주세요.'
-                  : '인터넷 연결을 확인해 주세요.';
-        show(`<p class="err">${h(why)}</p><button class="btn" id="b-re" type="button">다시 시도</button><button class="btn ghost" id="b-out" type="button">${guest ? '로그인 화면으로' : '로그아웃'}</button>`);
-        document.getElementById('b-re').onclick = () => location.reload();
-        document.getElementById('b-out').onclick = () => { store.del('knu1.guest'); signOut(); }; return;
+    let html = store.get(C.app), idx = store.get(C.idx), fresh = false;
+    if (!html || fetching) {
+      busy('불러오는 중…');
+      try {
+        const got = await withTimeout(fetching ? fetching.then(r => { if (r instanceof Error) throw r; return r; }) : download(guest), 15000);
+        html = got.html; idx = got.idx; fresh = true; store.set(C.checked, String(Date.now()));
+      } catch (e) {
+        // GitHub 로그인이 끊김(다른 기기에서 여러 번 로그인하면 예전 것이 끊긴다) → 예전 화면으로 열면 올리기가 전부 실패하므로 다시 로그인부터
+        if (!guest && e.status === 401) { store.del(TOKEN_KEY); store.del(C.me); loginScreen('<span class="err">GitHub 로그인이 만료됐습니다. 다시 로그인해 주세요.</span>'); return; }
+        html = store.get(C.app); idx = store.get(C.idx);
+        if (!html) {
+          const why = guest ? (e.status === 404 ? '앱 파일을 찾지 못했습니다. 잠시 뒤 다시 열어 주세요.' : '인터넷 연결을 확인해 주세요.')
+                    : e.status === 404 ? '저장소 초대를 아직 수락하지 않았거나, 앱 파일이 저장소에 없습니다. GitHub 메일함에서 초대를 수락해 주세요.'
+                    : (e.status === 401 || e.status === 403) ? 'GitHub 권한이 만료됐습니다. 다시 로그인해 주세요.'
+                    : '인터넷 연결을 확인해 주세요.';
+          show(`<p class="err">${h(why)}</p><button class="btn" id="b-re" type="button">다시 시도</button><button class="btn ghost" id="b-out" type="button">${guest ? '로그인 화면으로' : '로그아웃'}</button>`);
+          document.getElementById('b-re').onclick = () => location.reload();
+          document.getElementById('b-out').onclick = () => { store.del('knu1.guest'); signOut(); }; return;
+        }
       }
     }
+    let idxObj; try { idxObj = idx ? JSON.parse(idx) : undefined; } catch (e) { idxObj = undefined; }
 
     const DB = makeDB(guest);
     const USER = { canEdit: async () => ROLE === 'owner' || ROLE === 'editor', id: async () => LOGIN || 'guest' };
-    window.GICHUL_LIVE = idx || undefined;
+    window.GICHUL_LIVE = idxObj;
     window.APP = {
       sb, gh, raw, repo: CFG.repo, login: LOGIN, role: ROLE,
       isOwner: !guest && LOGIN === String(CFG.owner).toLowerCase(), signOut, guest,
@@ -238,6 +312,10 @@
     };
     window.claude = { use: async name => name === 'db' ? DB : name === 'user' ? USER : null };
     inject(html);
+    // 새 버전 확인: 저장해 둔 것으로 열었으면 지금, 그 뒤엔 앱으로 돌아올 때 30분마다
+    const later = () => { if (!document.hidden && Date.now() - (+store.get(C.checked) || 0) > 30 * 60000) refresh(guest); };
+    if (!fresh) setTimeout(() => refresh(guest), 1200);
+    document.addEventListener('visibilitychange', later);
   }
   main().catch(e => { console.error(e); show(`<p class="err">문제가 생겼습니다: ${h(e.message)}</p><button class="btn" type="button" onclick="location.reload()">다시 시도</button>`); });
 })();
