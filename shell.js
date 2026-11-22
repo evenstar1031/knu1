@@ -1,6 +1,6 @@
 /* 본과 1학년 앱 — 껍데기
    1) GitHub 로 로그인 (Supabase Auth)  2) 회원인지 확인 (members 표)
-   3) 비공개 저장소에서 앱 본체(app/app.html)와 기출 현황을 받아 화면에 올림
+   3) 비공개 저장소에서 앱 본체(_자동관리/app/app.html)와 기출 현황을 받아 화면에 올림
    4) 본체가 쓰는 window.claude.use("db"|"user") 를 Supabase 로 이어 줌 (Claude 아티팩트와 같은 코드가 그대로 돈다) */
 (function(){
   const CFG = window.APP_CONFIG;
@@ -58,6 +58,7 @@
     return as === 'blob' ? res.blob() : res.text();
   }
   let raw = rawApi;
+  const APP_DIR = '_자동관리/app/';   // 저장소에서 앱 본체가 있는 폴더
 
   /* ── 저장 공간: 아티팩트의 db 를 흉내 낸 Supabase 연결 ── */
   let LOGIN = '', ROLE = '';
@@ -210,7 +211,7 @@
     busy('불러오는 중…');
     let html = null, idx = null;
     try {
-      [html, idx] = await withTimeout(Promise.all([raw('app/app.html'), raw('app/gichul_index.json').then(JSON.parse).catch(() => null)]), 12000);
+      [html, idx] = await withTimeout(Promise.all([raw(APP_DIR + 'app.html'), raw(APP_DIR + 'gichul_index.json').then(JSON.parse).catch(() => null)]), 12000);
       store.set('knu1.app', html); if (idx) store.set('knu1.idx', JSON.stringify(idx));
     } catch (e) {
       // GitHub 로그인이 끊김(다른 기기에서 여러 번 로그인하면 예전 것이 끊긴다) → 예전 화면으로 열면 올리기가 전부 실패하므로 다시 로그인부터
