@@ -1,5 +1,5 @@
 /* 껍데기와 바뀌지 않는 라이브러리·글꼴을 저장해 두어 빨리 열리게 한다. 데이터(GitHub·Supabase)는 건드리지 않는다. */
-const CACHE = 'knu1-shell-v6';
+const CACHE = 'knu1-shell-v7';
 const LIBS = 'knu1-libs-v1';
 const SHELL = ['./', 'index.html', 'shell.js', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
 // 주소에 버전이 들어 있어 내용이 안 바뀌는 것 + 글꼴 → 저장해 둔 것을 바로 씀
@@ -22,6 +22,11 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (u.origin !== location.origin) return;
+  // 글씨체 파일: 바뀌지 않으므로 저장한 것 그대로
+  if (u.pathname.includes('/fonts/')) {
+    e.respondWith(caches.open(LIBS).then(async c => (await c.match(e.request)) || fetch(e.request).then(r => { if (r.ok) c.put(e.request, r.clone()); return r; })));
+    return;
+  }
   // 껍데기: 늘 새 것을 먼저, 안 되면 저장해 둔 것
   e.respondWith(fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(e.request, c)); return r; })
     .catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));

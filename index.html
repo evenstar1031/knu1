@@ -16,17 +16,16 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://api.github.com" crossorigin>
 <link rel="preconnect" href="https://tkgwfqiqsnqtoljalmux.supabase.co" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/KoPubWorldBatang-Bold.subset.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:"KNU Serif";font-weight:600 1000;font-display:swap;src:url("fonts/KoPubWorldBatang-Bold.subset.woff2") format("woff2")}
 :root{--paper:#F5F6F4;--sheet:#fff;--ink:#1C2433;--muted:#5B6473;--rule:#D9DDE3;--theory:#34507A;--crimson:#A4122E;color-scheme:light dark}
 @media (prefers-color-scheme:dark){:root{--paper:#15191F;--sheet:#1C2129;--ink:#E6E9EE;--muted:#A1A9B6;--rule:#343B46;--theory:#7FA0CF;--crimson:#E0607A}}
-html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-text-size-adjust:100%}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"Apple SD Gothic Neo","Pretendard","Malgun Gothic",sans-serif;font-weight:500;-webkit-text-size-adjust:100%}
 #boot{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));box-sizing:border-box}
 .card{width:min(380px,100%);text-align:center}
 .card .eyebrow{margin:0 0 6px;font-size:13px;color:var(--muted);letter-spacing:.04em}
-.card h1{font-weight:700;letter-spacing:-.03em;font-size:34px;margin:0 0 28px}
+.card h1{font-family:"KNU Serif","AppleMyungjo",serif;font-weight:700;letter-spacing:-.02em;font-size:34px;margin:0 0 28px}
 .card p{line-height:1.7;color:var(--muted);margin:0 0 16px;font-size:15px;word-break:keep-all}
 .card b{color:var(--ink)}
 .btn{font:inherit;font-size:16px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;border-radius:12px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer}
