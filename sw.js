@@ -1,5 +1,5 @@
 /* 껍데기와 바뀌지 않는 라이브러리·글꼴을 저장해 두어 빨리 열리게 한다. 데이터(GitHub·Supabase)는 건드리지 않는다. */
-const CACHE = 'knu1-shell-v9';
+const CACHE = 'knu1-shell-v10';
 const LIBS = 'knu1-libs-v1';
 const SHELL = ['./', 'index.html', 'shell.js', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
 // 주소에 버전이 들어 있어 내용이 안 바뀌는 것 + 글꼴 → 저장해 둔 것을 바로 씀
