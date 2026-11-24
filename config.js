@@ -2,6 +2,6 @@
 window.APP_CONFIG = {
   supabaseUrl: 'https://tkgwfqiqsnqtoljalmux.supabase.co',
   supabaseAnonKey: 'sb_publishable_5ynYdcoPb606NpYoLCQVRg_8mF7OSAf',
-  repo: 'evenstar1031/Classification-of-Past-Exam',   // 앱 본체·기출이 있는 비공개 저장소
-  owner: 'evenstar1031'                               // 「바로 만들기」를 쓸 수 있는 저장소 주인
+  repo: 'seohoe1031/Classification-of-Past-Exam',   // 앱 본체·기출이 있는 비공개 저장소
+  owner: 'seohoe1031'                               // 「바로 만들기」를 쓸 수 있는 저장소 주인
 };
